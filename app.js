@@ -55,12 +55,18 @@
 
   // ---------- step sensor ----------
   let sensor = 'idle'; // idle | running | unsupported | denied | nodata
-  let detector = null, lastSave = 0, gotData = false, wakeLock = null;
+  let detector = null, lastSave = 0, gotData = false, wakeLock = null, evCount = 0, evSince = 0;
   function onMotion(e) {
     const a = e.accelerationIncludingGravity;
     if (!a || a.x == null) return;
     gotData = true;
-    const c = detector.push(a.x, a.y, a.z, e.timeStamp || Date.now());
+    const now = performance.now();
+    evCount++;
+    if (now - evSince > 1000) {
+      const el = $('#sensorInfo'); if (el) el.textContent = `Sensor: ${Math.round(evCount * 1000 / (now - evSince))} readings/s`;
+      evCount = 0; evSince = now;
+    }
+    const c = detector.push(a.x, a.y, a.z, now);
     if (c > 0) {
       day().steps += c;
       if (Date.now() - lastSave > 2000) { save(); lastSave = Date.now(); }
@@ -76,7 +82,7 @@
       }
     } catch { sensor = 'denied'; return render(); }
     detector = StepDetector({ threshold: state.settings.sens });
-    gotData = false;
+    gotData = false; evCount = 0; evSince = performance.now();
     window.addEventListener('devicemotion', onMotion);
     sensor = 'running'; render();
     if (state.settings.keepAwake) requestWake();
@@ -104,7 +110,7 @@
   function viewWalk() {
     const d = readDay(), s = state.settings, m = metrics(d.steps);
     const msgs = {
-      idle: '', running: '<div class="notice">Counting. Keep this screen open and the phone in a pocket or hand while you walk.</div>',
+      idle: '', running: '<div class="notice">Counting. Keep this screen open and the phone in a pocket or hand while you walk. Steps are added once you have taken about six in a row at a steady pace. <span class="muted small" id="sensorInfo"></span></div>',
       unsupported: '<div class="notice">This browser has no motion sensor. Open the app on your phone, or add steps by hand below.</div>',
       denied: '<div class="notice">Motion access was refused. Allow it in your browser’s site settings, then press Start again.</div>',
       nodata: '<div class="notice">No motion data arrived. This usually means a desktop browser. Use your phone, or add steps by hand.</div>',
