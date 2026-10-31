@@ -1,0 +1,85 @@
+:root {
+  --bg: #f5f2e9; --card: #ffffff; --ink: #1c2a26; --muted: #66756f; --line: #e3ded0;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --gold: #b8892b; --done: #e3f1ea;
+  --arabic: 30px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101a17; --card: #17251f; --ink: #e8efe9; --muted: #98a8a0; --line: #2a3b33;
+    --accent: #4fb596; --accent-ink: #08201a; --gold: #d9b45a; --done: #1b3a2e;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.5 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; padding-bottom: calc(76px + var(--safe-b)); }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px 6px; max-width: 720px; margin: 0 auto; }
+.hello { font-weight: 700; font-size: 20px; }
+.date { color: var(--muted); font-size: 14px; }
+.streak { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+main { max-width: 720px; margin: 0 auto; padding: 8px 16px 24px; }
+
+nav#tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card); border-top: 1px solid var(--line); padding-bottom: var(--safe-b); z-index: 10; }
+nav#tabs button { flex: 1; border: 0; background: none; color: var(--muted); font: 600 13px Inter, sans-serif; padding: 14px 4px 12px; cursor: pointer; }
+nav#tabs button[aria-current="page"] { color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin: 12px 0; }
+h2 { font-size: 18px; margin: 4px 0 8px; }
+h3 { font-size: 15px; margin: 0 0 4px; }
+.muted { color: var(--muted); font-size: 14px; }
+.small { font-size: 13px; }
+
+button.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 18px; font: 600 15px Inter, sans-serif; cursor: pointer; }
+button.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+button.btn.small { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row.center { justify-content: center; }
+
+/* walk */
+.ring-wrap { display: grid; place-items: center; position: relative; margin: 6px 0 2px; }
+.ring-text { position: absolute; text-align: center; }
+.ring-text .n { font-size: 44px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+.ring-text .g { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.ring-bg { stroke: var(--line); } .ring-fg { stroke: var(--accent); transition: stroke-dashoffset .4s; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin-top: 10px; }
+.stats b { display: block; font-size: 20px; } .stats span { color: var(--muted); font-size: 12px; }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 110px; margin-top: 8px; }
+.bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 4px; }
+.bar i { display: block; width: 100%; background: var(--accent); border-radius: 6px 6px 2px 2px; min-height: 3px; opacity: .85; }
+.bar.today i { background: var(--gold); }
+.bar em { font-style: normal; font-size: 11px; color: var(--muted); }
+.notice { background: var(--done); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+
+/* adhkar */
+.seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg button { flex: 1; border: 0; background: none; border-radius: 10px; padding: 10px; font: 600 14px Inter, sans-serif; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 10px 0 2px; }
+.progress i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.dhikr.done { background: var(--done); }
+.dhikr header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.ar { font-family: 'Amiri Quran', 'Scheherazade New', 'Noto Naskh Arabic', 'Traditional Arabic', serif; direction: rtl; text-align: center; font-size: var(--arabic); line-height: 2.1; margin: 10px 0; }
+.ar.bism { font-size: calc(var(--arabic) * .85); color: var(--gold); margin-bottom: 0; }
+.translit { font-style: italic; color: var(--muted); font-size: 14px; }
+.trans { font-size: 15px; margin: 6px 0; }
+.ref { color: var(--muted); font-size: 12px; }
+.counter { width: 100%; margin-top: 10px; border: 2px solid var(--accent); background: transparent; color: var(--accent); border-radius: 14px; padding: 14px; font: 700 18px Inter, sans-serif; cursor: pointer; }
+.dhikr.done .counter { background: var(--accent); color: var(--accent-ink); }
+.counter:active { transform: scale(.99); }
+details summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14px; margin-top: 6px; }
+
+/* checks */
+label.check { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+label.check:last-child { border-bottom: 0; }
+label.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* settings */
+.field { display: grid; gap: 4px; margin: 12px 0; }
+.field label { font-weight: 600; font-size: 14px; }
+.field input, .field select { font: 16px Inter, sans-serif; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
+.field input[type=range] { padding: 0; }
+.prose p, .prose li { font-size: 15px; } .prose ul { padding-left: 20px; margin: 6px 0; }
+.prose a { color: var(--accent); }
+@media (min-width: 700px) { .ar { font-size: calc(var(--arabic) * 1.1); } }
+
+.vn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5em; height: 1.5em; padding: 0 .25em; margin: 0 .15em; border: 1.5px solid var(--gold); border-radius: 999px; color: var(--gold); font: 600 .5em/1 'Amiri Quran', 'Noto Naskh Arabic', serif; vertical-align: middle; }

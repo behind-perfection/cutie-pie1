@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Adhkar &amp; Steps</title>
+  <meta name="theme-color" content="#1f6f5c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <div class="hello" id="hello"></div>
+      <div class="date" id="today"></div>
+    </div>
+    <div class="streak" id="streak" title="Days in a row with all morning and evening adhkar done"></div>
+  </header>
+
+  <main id="view" aria-live="polite"></main>
+
+  <nav id="tabs" aria-label="Sections">
+    <button data-tab="walk">Walk</button>
+    <button data-tab="adhkar">Adhkar</button>
+    <button data-tab="habits">Daily</button>
+    <button data-tab="ruqyah">Ruqyah</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+
+  <script src="steps.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
