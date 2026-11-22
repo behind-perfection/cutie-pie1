@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Adhkar &amp; Steps">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a8067"/>
+      <stop offset="1" stop-color="#11463a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.34" cy="0.22" r="0.55">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="book" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf5"/>
+      <stop offset="1" stop-color="#efe9d5"/>
+    </linearGradient>
+    <linearGradient id="step" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9c060"/>
+      <stop offset="1" stop-color="#c7983c"/>
+    </linearGradient>
+    <mask id="moonMask">
+      <circle cx="150" cy="140" r="30" fill="#ffffff"/>
+      <circle cx="170" cy="127" r="27" fill="#000000"/>
+    </mask>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" rx="110" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" rx="110" fill="url(#glow)"/>
+
+  <circle cx="150" cy="140" r="30" fill="#f0cd6e" mask="url(#moonMask)"/>
+
+  <polygon points="368.0,149.0 373.8,166.2 391.0,172.0 373.8,177.8 368.0,195.0 362.2,177.8 345.0,172.0 362.2,166.2" fill="#f0cf79"/>
+
+  <g fill="#000000" opacity="0.22" filter="url(#soft)">
+    <rect x="150" y="326" width="48" height="8" rx="4"/>
+    <rect x="198" y="291" width="48" height="8" rx="4"/>
+    <rect x="246" y="257" width="48" height="8" rx="4"/>
+    <rect x="294" y="223" width="48" height="8" rx="4"/>
+  </g>
+  <g fill="url(#step)">
+    <rect x="152" y="310" width="46" height="17" rx="6"/>
+    <rect x="200" y="276" width="46" height="17" rx="6"/>
+    <rect x="248" y="242" width="46" height="17" rx="6"/>
+    <rect x="296" y="208" width="46" height="17" rx="6"/>
+  </g>
+
+  <ellipse cx="256" cy="408" rx="156" ry="9" fill="#000000" opacity="0.28" filter="url(#soft)"/>
+  <path d="M98 356 Q178 336 256 356 Q334 336 414 356 L414 396 Q334 386 256 396 Q178 386 98 396 Z" fill="url(#book)"/>
+  <g stroke="#e0d7ba" stroke-width="2.4" stroke-linecap="round" fill="none">
+    <path d="M130 368 Q192 363 238 368"/>
+    <path d="M274 368 Q336 363 382 368"/>
+    <path d="M130 379 Q192 375 238 379"/>
+    <path d="M274 379 Q336 375 382 379"/>
+  </g>
+  <line x1="256" y1="356" x2="256" y2="395" stroke="#d3c9a8" stroke-width="3"/>
+</svg>

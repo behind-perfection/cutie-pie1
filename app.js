@@ -3,6 +3,7 @@
   const DEFAULTS = {
     settings: { goal: 10000, strideCm: 70, weightKg: 65, sens: 1.2, arabicSize: 30, school: 0, method: 1, lat: null, lng: null, keepAwake: true },
     days: {}, timings: null, tab: 'walk',
+    library: { books: [] },
   };
   const $ = (s, r = document) => r.querySelector(s);
   const view = $('#view');
@@ -11,7 +12,7 @@
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY)) || {};
-      return { ...DEFAULTS, ...s, settings: { ...DEFAULTS.settings, ...(s.settings || {}) } };
+      return { ...DEFAULTS, ...s, settings: { ...DEFAULTS.settings, ...(s.settings || {}) }, library: { books: [], ...(s.library || {}) } };
     } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
   }
   let state = load();
@@ -20,6 +21,67 @@
   const readDay = (k = dkey()) => state.days[k] || { steps: 0, counts: {}, habits: {} };
   const day = (k = dkey()) => (state.days[k] ||= { steps: 0, counts: {}, habits: {} });
   const fmt = (n) => Math.round(n).toLocaleString();
+
+  const fmtSize = (bytes) => {
+    if (!bytes) return '0 KB';
+    const mb = bytes / 1048576;
+    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  };
+  const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const newId = () => `book-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const relTime = (ts) => {
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    const t = new Date(ts); t.setHours(0, 0, 0, 0);
+    const days = Math.round((d - t) / 86400000);
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  };
+  const ensureEpubAssets = () =>
+    (window.AdhkarReader && typeof window.AdhkarReader.ensureLibs === 'function')
+      ? window.AdhkarReader.ensureLibs()
+      : Promise.resolve();
+
+  let toastTimer = null;
+  function toast(msg) {
+    let el = $('#toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast';
+      el.className = 'toast';
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'polite');
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3400);
+  }
+
+  let coverUrls = [];
+  function revokeCoverUrls() {
+    for (const url of coverUrls) { try { URL.revokeObjectURL(url); } catch {} }
+    coverUrls = [];
+  }
+  async function mountLibraryCovers() {
+    if (state.tab !== 'library' || (window.AdhkarReader && window.AdhkarReader.isOpen())) return;
+    revokeCoverUrls();
+    const imgs = Array.from(view.querySelectorAll('img[data-cover-id]'));
+    await Promise.all(imgs.map(async (img) => {
+      const id = img.dataset.coverId;
+      try {
+        const rec = await AdhkarStore.get(id);
+        if (!rec || !rec.coverBlob || !img.isConnected) return;
+        const url = URL.createObjectURL(rec.coverBlob);
+        coverUrls.push(url);
+        img.onload = () => img.classList.add('ready');
+        img.onerror = () => img.removeAttribute('src');
+        img.src = url;
+      } catch {}
+    }));
+  }
 
   // ---------- completion + streak ----------
   const listDone = (d, period) => LISTS[period].every((id) => (d.counts[`${period}:${id}`] || 0) >= ITEMS[id].count);
@@ -247,6 +309,142 @@
       </section>`;
   }
 
+  function viewLibrary() {
+    const books = state.library.books;
+    const totalSize = books.reduce((n, b) => n + (b.size || 0), 0);
+    const byline = (b) => {
+      const bits = [];
+      if (b.author) bits.push(b.author);
+      bits.push(fmtSize(b.size));
+      return bits.join(' · ');
+    };
+    const cards = books.map((b) => `
+        <article class="book" data-id="${b.id}">
+          <div class="book-cover ${b.type}">
+            <div class="book-placeholder">
+              <span class="book-initial">${escHtml((b.title || '?').trim().charAt(0).toUpperCase() || '?')}</span>
+              <span class="book-type-badge">${b.type === 'pdf' ? 'PDF' : 'EPUB'}</span>
+            </div>
+            <img data-cover-id="${b.id}" alt="Cover of ${escHtml(b.title)}" loading="lazy">
+          </div>
+          <div class="book-info">
+            <h3 class="book-title">${escHtml(b.title)}</h3>
+            <p class="book-meta">${escHtml(byline(b))}</p>
+            <p class="book-added">Added ${new Date(b.addedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}${b.lastOpenedAt ? ` · opened ${relTime(b.lastOpenedAt)}` : ''}</p>
+          </div>
+          <div class="book-actions">
+            <button class="btn small" data-lib-open="${b.id}">Read</button>
+            <button class="btn ghost small" data-lib-download="${b.id}">Download</button>
+            <button class="btn ghost small danger" data-lib-delete="${b.id}" aria-label="Delete ${escHtml(b.title)}">✕</button>
+          </div>
+        </article>`).join('');
+    return `
+      <section class="card library-head">
+        <div class="library-head-row">
+          <div>
+            <h2>My library</h2>
+            <p class="muted small">${books.length ? `${books.length} book${books.length > 1 ? 's' : ''} · ${fmtSize(totalSize)} · stored only on this device` : 'Your library is empty'}</p>
+          </div>
+          <button class="btn" data-lib-add>Add books</button>
+        </div>
+        <p class="muted small library-hint">PDF and EPUB files live in this browser on this device — nothing is uploaded.</p>
+        <input type="file" id="bookPicker" class="visually-hidden-file" accept=".pdf,.epub,application/pdf,application/epub+zip" multiple>
+      </section>
+      ${books.length ? `<div class="books">${cards}</div>` : `
+        <section class="library-empty">
+          <img class="library-empty-logo" src="icons/icon.svg" alt="" width="74" height="74">
+          <h2>Add your first book</h2>
+          <p>PDF and EPUB files are supported. They are stored only in this browser — no account, no cloud, no upload.</p>
+          <button class="btn" data-lib-add>Add a book</button>
+        </section>`}`;
+  }
+
+  async function openBook(id) {
+    const meta = state.library.books.find((b) => b.id === id);
+    if (!meta) return;
+    let rec = null;
+    try { rec = await AdhkarStore.get(id); } catch {}
+    if (!rec || !rec.blob) { toast('This book is no longer stored on this device. Delete it and add it again.'); return; }
+    meta.lastOpenedAt = Date.now();
+    save();
+    window.AdhkarReader.open(meta, rec, { onClose: () => render() });
+  }
+
+  async function downloadBook(id) {
+    const meta = state.library.books.find((b) => b.id === id);
+    if (!meta) return;
+    let rec = null;
+    try { rec = await AdhkarStore.get(id); } catch {}
+    if (!rec || !rec.blob) { toast('This book is no longer stored on this device.'); return; }
+    const url = URL.createObjectURL(rec.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = meta.fileName || meta.title || 'book';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 5000);
+    toast(`Downloading “${meta.title}”.`);
+  }
+
+  async function deleteBook(id) {
+    const meta = state.library.books.find((b) => b.id === id);
+    if (!meta) return;
+    if (!confirm(`Delete “${meta.title}” from your library? This removes the file from this device.`)) return;
+    try { await AdhkarStore.remove(id); } catch {}
+    state.library.books = state.library.books.filter((b) => b.id !== id);
+    save();
+    render();
+    toast(`Deleted “${meta.title}”.`);
+  }
+
+  async function handleBookFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const picked = [];
+    const skipped = [];
+    for (const f of files) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      const type = ext === 'pdf' ? 'pdf' : ext === 'epub' ? 'epub'
+        : f.type === 'application/pdf' ? 'pdf' : f.type === 'application/epub+zip' ? 'epub' : null;
+      if (!type) { skipped.push(f.name); continue; }
+      picked.push({ f, type, name: f.name.replace(/\.(pdf|epub)$/i, '') || 'Untitled' });
+    }
+    if (!picked.length) { toast('Only PDF and EPUB files are supported.'); return; }
+    let added = 0;
+    for (const { f, type, name } of picked) {
+      const id = newId();
+      const meta = { id, title: name, author: '', type, size: f.size, fileName: f.name, addedAt: Date.now(), lastOpenedAt: 0 };
+      let coverBlob = null;
+      if (type === 'epub') {
+        try {
+          await ensureEpubAssets();
+          const buf = await f.arrayBuffer();
+          const info = await AdhkarStore.extractEpubInfo(buf).catch(() => null);
+          if (info) {
+            if (info.title) meta.title = info.title;
+            if (info.author) meta.author = info.author;
+            coverBlob = info.coverBlob || null;
+          }
+        } catch {}
+      }
+      try {
+        await AdhkarStore.put({ id, blob: f, coverBlob });
+      } catch {
+        toast(`Could not save “${meta.title}”. Your browser may be full or the library unavailable.`);
+        continue;
+      }
+      state.library.books.push(meta);
+      added++;
+    }
+    save();
+    const parts = [];
+    if (added) parts.push(`Added ${added} book${added > 1 ? 's' : ''}.`);
+    if (skipped.length) parts.push(`Skipped ${skipped.length} unsupported file${skipped.length > 1 ? 's' : ''}.`);
+    if (parts.length) toast(parts.join(' '));
+    render();
+  }
+
   function viewSettings() {
     const s = state.settings;
     const f = (id, label, type, val, extra = '') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${type}" value="${val}" ${extra}></div>`;
@@ -276,14 +474,14 @@
       </section>
       <section class="card">
         <h2>Your data</h2>
-        <p class="muted small" style="margin:0 0 8px">Everything is stored only in this browser.</p>
+        <p class="muted small" style="margin:0 0 8px">Everything is stored only in this browser. Book files (PDF/EPUB) live in the browser’s storage by themselves and are not included in the backup below.</p>
         <div class="row"><button class="btn ghost small" id="export">Download backup</button>
           <button class="btn ghost small" id="resetToday">Reset today</button></div>
       </section>`;
   }
 
   // ---------- render + events ----------
-  const VIEWS = { walk: viewWalk, adhkar: viewAdhkar, habits: viewHabits, ruqyah: viewRuqyah, settings: viewSettings };
+  const VIEWS = { walk: viewWalk, adhkar: viewAdhkar, habits: viewHabits, ruqyah: viewRuqyah, library: viewLibrary, settings: viewSettings };
   function chrome() {
     const h = new Date().getHours();
     $('#hello').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -296,6 +494,7 @@
     const y = window.scrollY;
     view.innerHTML = VIEWS[state.tab]();
     chrome();
+    mountLibraryCovers();
     window.scrollTo(0, y);
   }
 
@@ -303,6 +502,10 @@
   document.addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.tab) { state.tab = t.dataset.tab; save(); render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.libAdd) { const p = $('#bookPicker'); if (p) p.click(); return; }
+    if (t.dataset.libOpen) { await openBook(t.dataset.libOpen); return; }
+    if (t.dataset.libDownload) { await downloadBook(t.dataset.libDownload); return; }
+    if (t.dataset.libDelete) { await deleteBook(t.dataset.libDelete); return; }
     if (t.dataset.period) { adhkarPeriod = t.dataset.period; render(); return; }
     if (t.classList.contains('counter')) {
       const d = day(), k = t.dataset.key, max = ITEMS[t.dataset.id].count;
@@ -334,6 +537,7 @@
   document.addEventListener('change', async (e) => {
     const t = e.target, s = state.settings;
     if (t.dataset.habit) { day().habits[t.dataset.habit] = t.checked; save(); return; }
+    if (t.id === 'bookPicker') { await handleBookFiles(t.files); t.value = ''; return; }
     const map = { goal: () => (s.goal = num('goal', 1000, 100000) ?? s.goal), stride: () => (s.strideCm = num('stride', 30, 120) ?? s.strideCm),
       weight: () => (s.weightKg = num('weight', 25, 250) ?? s.weightKg), awake: () => (s.keepAwake = t.checked),
       method: () => { s.method = +t.value; state.timings = null; }, school: () => { s.school = +t.value; state.timings = null; } };
