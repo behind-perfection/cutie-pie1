@@ -1,4 +1,4 @@
-const CACHE = 'adhkar-walk-v4';
+const CACHE = 'adhkar-walk-v6';
 const SHELL = ['./', 'index.html', 'style.css', 'steps.js', 'data.js', 'app.js', 'library-store.js', 'library-reader.js', 'vendor/jszip.min.js', 'vendor/epub.min.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/icon-64.png', 'icons/icon-192-maskable.png', 'icons/icon-512-maskable.png'];
 
 self.addEventListener('install', (e) => {

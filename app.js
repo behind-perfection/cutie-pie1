@@ -28,6 +28,21 @@
     return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
   };
   const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Turns the words in a string into tappable links that open Google search
+  // for "<word> meaning" in a new tab. Punctuation-only tokens are left as plain text.
+  function wordSpans(text) {
+    return String(text == null ? '' : text)
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((token) => {
+        const visible = escHtml(token);
+        const clean = token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+        if (!clean) return visible;
+        const q = encodeURIComponent(`${clean} meaning`);
+        return `<a class="word" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener" title="Search for ${escHtml(clean)}">${visible}</a>`;
+      })
+      .join(' ');
+  }
   const newId = () => `book-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const relTime = (ts) => {
     const d = new Date(); d.setHours(0, 0, 0, 0);
@@ -314,7 +329,7 @@
     const totalSize = books.reduce((n, b) => n + (b.size || 0), 0);
     const byline = (b) => {
       const bits = [];
-      if (b.author) bits.push(b.author);
+      if (b.author) bits.push(wordSpans(b.author));
       bits.push(fmtSize(b.size));
       return bits.join(' · ');
     };
@@ -328,8 +343,8 @@
             <img data-cover-id="${b.id}" alt="Cover of ${escHtml(b.title)}" loading="lazy">
           </div>
           <div class="book-info">
-            <h3 class="book-title">${escHtml(b.title)}</h3>
-            <p class="book-meta">${escHtml(byline(b))}</p>
+            <h3 class="book-title">${wordSpans(b.title)}</h3>
+            <p class="book-meta">${byline(b)}</p>
             <p class="book-added">Added ${new Date(b.addedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}${b.lastOpenedAt ? ` · opened ${relTime(b.lastOpenedAt)}` : ''}</p>
           </div>
           <div class="book-actions">
@@ -345,7 +360,7 @@
             <h2>My library</h2>
             <p class="muted small">${books.length ? `${books.length} book${books.length > 1 ? 's' : ''} · ${fmtSize(totalSize)} · stored only on this device` : 'Your library is empty'}</p>
           </div>
-          <button class="btn" data-lib-add>Add books</button>
+          <button class="btn" data-lib-add="1">Add books</button>
         </div>
         <p class="muted small library-hint">PDF and EPUB files live in this browser on this device — nothing is uploaded.</p>
         <input type="file" id="bookPicker" class="visually-hidden-file" accept=".pdf,.epub,application/pdf,application/epub+zip" multiple>
@@ -355,7 +370,7 @@
           <img class="library-empty-logo" src="icons/icon.svg" alt="" width="74" height="74">
           <h2>Add your first book</h2>
           <p>PDF and EPUB files are supported. They are stored only in this browser — no account, no cloud, no upload.</p>
-          <button class="btn" data-lib-add>Add a book</button>
+          <button class="btn" data-lib-add="1">Add a book</button>
         </section>`}`;
   }
 
@@ -502,7 +517,7 @@
   document.addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.tab) { state.tab = t.dataset.tab; save(); render(); window.scrollTo(0, 0); return; }
-    if (t.dataset.libAdd) { const p = $('#bookPicker'); if (p) p.click(); return; }
+    if (t.dataset.libAdd !== undefined) { const p = $('#bookPicker'); if (p) p.click(); return; }
     if (t.dataset.libOpen) { await openBook(t.dataset.libOpen); return; }
     if (t.dataset.libDownload) { await downloadBook(t.dataset.libDownload); return; }
     if (t.dataset.libDelete) { await deleteBook(t.dataset.libDelete); return; }
