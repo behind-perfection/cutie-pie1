@@ -20,5 +20,17 @@ No accounts, no server. Everything is saved in the browser.
 - Translations of 112-114 and the ruqyah/ajwah wording should be compared against Quran.com / Sunnah.com.
 - "A‘udhu bikalimatillah..." is placed in the evening list because Hisn al-Muslim 97 gives it as an evening dhikr.
 
+## Library (PDF & EPUB)
+A Library tab holds PDF and EPUB books stored entirely on the device (no accounts, no uploads):
+- Add books from a file picker — PDF opens in the browser’s built-in PDF viewer inside the app; EPUB opens in the built-in reader.
+- Each card shows the book’s title (read from the EPUB’s own metadata when possible), author, size and dates; EPUB covers from the file are shown.
+- Readers: EPUB gets a continuous reading view with previous/next navigation, a contents panel, progress bar and chapter label; PDFs get an in-app viewer with an open-in-browser / download fallback.
+- Download a copy, or delete; deleting removes the file from this device.
+- The JSON backup in Settings contains adhkar/steps/habit data and library metadata, but not the book files themselves — those live in this browser’s IndexedDB and are lost if the browser data is cleared.
+- epub.js (MIT) renders EPUBs; JSZip (MIT) reads the EPUB archive. The vendor files are in `vendor/` and load only when a library EPUB opens.
+
+## Logo
+The app icon (`icons/icon.svg` + generated PNGs: 192/512, plus maskable variants and a 180px apple-touch icon) is a rounded-green tile with a gold crescent moon, four ascending steps over an open book, and a four-pointed star. It shows up in the header, the favicon and the app manifest; the library empty state uses the same artwork.
+
 ## Files
-index.html, style.css, app.js (UI), data.js (all adhkar text), steps.js (step detector), steps.test.js (`node steps.test.js`), sw.js (offline), manifest.webmanifest, icons/
+index.html, style.css, app.js (UI), data.js (all adhkar text), steps.js (step detector), steps.test.js (`node steps.test.js`), library-store.js (book storage + EPUB metadata), library-reader.js (PDF/EPUB reader overlay), vendor/ (jszip.min.js, epub.min.js), sw.js (offline), manifest.webmanifest, icons/
